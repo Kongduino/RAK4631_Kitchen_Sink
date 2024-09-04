@@ -6,6 +6,7 @@ For the moment the available tests are:
 
 * testRAK1901
 * testRAK1904
+* testRAK1906
 * testRAK1921
 * testRAK12003
 * testRAK12008

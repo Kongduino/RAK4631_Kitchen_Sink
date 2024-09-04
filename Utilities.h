@@ -19,19 +19,22 @@ void __throw_out_of_range(char const*) {}
 void __throw_logic_error(char const*) {}
 void __throw_out_of_range_fmt(char const*, ...) {}
 }
-template class basic_string<char>; //  https:// github.com/esp8266/Arduino/issues/1136
+template class basic_string<char>; // https://github.com/esp8266/Arduino/issues/1136
 
-#include "SparkFunLIS3DH.h" // http:// librarymanager/All#SparkFun-LIS3DH
-#include <SparkFun_u-blox_GNSS_Arduino_Library.h> // http:// librarymanager/All#SparkFun_u-blox_GNSS
+#include "SparkFunLIS3DH.h" // http://librarymanager/All#SparkFun-LIS3DH
+#include <SparkFun_u-blox_GNSS_Arduino_Library.h> // http://librarymanager/All#SparkFun_u-blox_GNSS
 #include "SparkFun_MLX90632_Arduino_Library.h"
-//  Click here to get the library: http:// librarymanager/AllSparkFun_MLX90632_Arduino_Library
-#include "SparkFun_SHTC3.h"  // Click here to get the library: http:// librarymanager/All#SparkFun_SHTC3
-#include "UVlight_LTR390.h"  // Click here to get the library: http:// librarymanager/All#RAK12019_LTR390
+//  Click here to get the library: http://librarymanager/AllSparkFun_MLX90632_Arduino_Library
+#include "SparkFun_SHTC3.h" // Click here to get the library: http://librarymanager/All#SparkFun_SHTC3
+#include "UVlight_LTR390.h" // Click here to get the library: http://librarymanager/All#RAK12019_LTR390
 #include "SparkFun_SHTC3.h"
 // Click here to get the library: http://librarymanager/All#SparkFun_SHTC3
 #include <SensirionI2cStc3x.h>
 #include <Adafruit_LPS2X.h>
-#include <Adafruit_Sensor.h> // Click here to get the library: http://librarymanager/All#Adafruit_LPS2X
+#include <Adafruit_Sensor.h>
+// Click here to get the library: http://librarymanager/All#Adafruit_LPS2X
+#include <Adafruit_BME680.h>
+// Click to install library: http://librarymanager/All#Adafruit_BME680
 
 vector<string> myBuff;
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R2);
@@ -50,14 +53,18 @@ struct rakSensor {
 };
 
 bool testRAK1921() {
-  addStringLine("  --> OLED test", 1);
+  sprintf(buff, " --> RAK1921 OLED test");
+  addStringLine(buff, 1);
+  Serial.println(buff);
   return hasOLED;
 }
 
 bool testRAK1904() {
   LIS3DH SensorTwo(I2C_MODE, 0x18);
   //  read the sensor value
-  addStringLine("  --> LIS3DH test", 1);
+  sprintf(buff, " --> RAK1904 test");
+  addStringLine(buff, 1);
+  Serial.println(buff);
   if (SensorTwo.begin() != 0) {
     Serial.println("Problem starting the sensor at 0x18.");
     addStringLine("  * Error!", 1);
@@ -83,7 +90,9 @@ bool testRAK1904() {
 }
 
 bool testRAK12500() {
-  addStringLine("  --> GNSS test", 1);
+  sprintf(buff, " --> RAK12500 GNSS test");
+  addStringLine(buff, 1);
+  Serial.println(buff);
   SFE_UBLOX_GNSS g_myGNSS;
   if (g_myGNSS.begin() == false) {
     Serial.println(F("GNSS not detected at default I2C address. Please check wiring."));
@@ -104,9 +113,9 @@ bool testRAK12003() {
   MLX90632 RAK_TempSensor;
   TwoWire &wirePort = Wire;
   MLX90632::status returnError;
-  Serial.println(" --> MLX90632 Test");
-  sprintf(buff, "MLX90632 Test");
+  sprintf(buff, " --> RAK12003 MLX90632 test");
   addStringLine(buff, 1);
+  Serial.println(buff);
   if (RAK_TempSensor.begin(MLX90632_ADDRESS, wirePort, returnError) == false) {
     Serial.println("MLX90632 Init Failed");
     sprintf(buff, " --> MLX90632 failed!");
@@ -129,7 +138,9 @@ bool testRAK12003() {
 
 bool testRAK12019() {
   UVlight_LTR390 ltr = UVlight_LTR390();
-  sprintf(buff, " --> RAK12019 test");
+  sprintf(buff, " --> RAK12019 LTR390 test");
+  addStringLine(buff, 1);
+  Serial.println(buff);
   addStringLine(buff, 1);
   Serial.println(buff);
   if (!ltr.init()) {
@@ -169,7 +180,7 @@ bool testRAK12019() {
 
 bool testRAK1901() {
   SHTC3 mySHTC3; // Declare an instance of the SHTC3 class
-  sprintf(buff, " --> SHTC3 test");
+  sprintf(buff, " --> RAK1901 SHTC3 test");
   addStringLine(buff, 1);
   Serial.println(buff);
   SHTC3_Status_TypeDef message = mySHTC3.begin();
@@ -194,8 +205,11 @@ bool testRAK1901() {
       Serial.println(buff);
       return false;
   }
+  Wire.setClock(400000);
+  // The sensor is listed to work up to 1 MHz I2C speed, but the I2C clock speed is global for all sensors on that bus
+  // so using 400 kHz or 100 kHz is recommended
   delay(5000); // Give time to read the welcome message and device ID.
-  SHTC3_Status_TypeDef result = mySHTC3.update();
+  mySHTC3.update();
   sprintf(buff, "RH: %.2f%% T: %.2f C", mySHTC3.toPercent(), mySHTC3.toDegC());
   addStringLine(buff, 1);
   Serial.println(buff);
@@ -203,6 +217,9 @@ bool testRAK1901() {
 }
 
 bool testRAK12008() {
+  sprintf(buff, " --> RAK12008 STC31 test");
+  addStringLine(buff, 1);
+  Serial.println(buff);
   SensirionI2cStc3x sensor;
   sensor.begin(Wire, 0x2C);
   uint32_t productId = 0;
@@ -239,6 +256,9 @@ bool testRAK12008() {
 }
 
 bool testRAK12011() {
+  sprintf(buff, " --> RAK12011 LPS33 test");
+  addStringLine(buff, 1);
+  Serial.println(buff);
   Adafruit_LPS22 g_lps22hb;
   if (!g_lps22hb.begin_I2C(0x5d)) {
     sprintf(buff, " - LPS33 error");
@@ -263,8 +283,45 @@ bool testRAK12011() {
 }
 
 bool testRAK1906() {
+  Adafruit_BME680 bme;
+  sprintf(buff, " --> RAK1906 BME680 test");
+  addStringLine(buff, 1);
+  Serial.println(buff);
+  if (!bme.begin(0x76)) {
+    sprintf(buff, " --> RAK1906 failed!");
+    subStringLine(buff, 1);
+    Serial.println(buff);
+    return false;
+  }
+  // Set up oversampling and filter initialization
+  bme.setTemperatureOversampling(BME680_OS_8X);
+  bme.setHumidityOversampling(BME680_OS_2X);
+  bme.setPressureOversampling(BME680_OS_4X);
+  bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+  bme.setGasHeater(320, 150); // 320*C for 150 ms
+  for (uint8_t i = 0; i < 3; i++) {
+    sprintf(buff, "T: %.2f C", bme.temperature);
+    addStringLine(buff, 1);
+    Serial.println(buff);
+    sprintf(buff, "RH: %.2f%%", bme.humidity);
+    addStringLine(buff, 1);
+    Serial.println(buff);
+    sprintf(buff, "Pa: %.2f HPa", (bme.pressure / 100.0));
+    addStringLine(buff, 1);
+    Serial.println(buff);
+    sprintf(buff, "Gas: %.2f KOhms", (bme.gas_resistance / 1000.0));
+    addStringLine(buff, 1);
+    Serial.println(buff);
+    delay(1000);
+    myBuff.erase(myBuff.end());
+    myBuff.erase(myBuff.end());
+    myBuff.erase(myBuff.end());
+    myBuff.erase(myBuff.end());
+  }
+
   return true;
 }
+
 bool testRAK12032() {
   return true;
 }
@@ -368,7 +425,8 @@ bool testRAK14008() {
   return true;
 }
 
-rakSensor knownProducts[] = {  {0x3c, "SSD1306", "rak1921", "OLED Display Solomon SSD1306", testRAK1921 },
+rakSensor knownProducts[] = {
+  {0x3c, "SSD1306", "rak1921", "OLED Display Solomon SSD1306", testRAK1921 },
   {0x18, "LIS3DH", "rak1904", "3-Axis Acceleration Sensor STM LIS3DH", testRAK1904 },
   {0x42, "ZOE-M8Q", "rak12500", "GNSS Location Module u-blox ZOE-M8Q", testRAK12500 },
   {0x76, "BME680", "rak1906", "Environment Sensor BOSCH BME680", testRAK1906 },
